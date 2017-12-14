@@ -1184,8 +1184,8 @@ class meta_search:
         self.satellites = list();
         #self.satellites.append(41);
         #self.satellites.append(48);
-	self.satellites.append(61)
-	#self.satellites.append(54)
+	#self.satellites.append(61)
+	self.satellites.append(54)
         #for i in np.arange(53,74): 
             #self.satellites.append(i);
         
@@ -1822,6 +1822,7 @@ class search():
             self.compare_with_zerocrossing(key_varnames);
         else:
             self.compare_with_tolerance(key_varnames,tol);
+
 
 
 
