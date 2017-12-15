@@ -4,6 +4,7 @@ import math
 from datetime import datetime, timedelta
 import matplotlib.pyplot as plt
 import os
+import copy
 class crosscorrelator():
     #Constructor
     def __init__(self):
@@ -41,7 +42,7 @@ class crosscorrelator():
             raise ValueError ("Mismatched Data Sizes")
         if type(corrinterval) != type(timedelta()):
             raise ValueError ("Not of timedelta format ")
-        #intialise data and booleans
+        #intialise data and booleans and save to object when neccessary
         new_correlation= True;
         time_index = int(0)
         starting_index = int(0)
@@ -49,6 +50,7 @@ class crosscorrelator():
         self.interval_datetimes = list()
         self.interval_baddata = list()
         self.interval_startingindex = list()
+        self.interval_length = corrinterval
         #Run across datetimes
         for datetime in self.__timestamps:
             #reset vals if new time interval
@@ -200,6 +202,52 @@ class crosscorrelator():
             self.correlation_matrix= reduced_array
         print 'number of intervals removed ',len(badindices)
         return reduced_array
+
+
+
+#New Plot utility with the objective of saving the cross correlator instances for retrievable plotdata for each interval
+class plotgenerator():
+    def __init__(self,satnum,bgcrosscorr,nkcrosscorr):
+        #check basic compatibilty
+        if (not bgcrosscorr.interval_length == nkcrosscorr.interval_length):
+            raise ValueError ("correlations not made over same time interval")
+        #create copies of data in the object
+        self.nkxc = copy.deepcopy(bgcrosscorr)
+        self.bgxc = copy.deepcopy(nkcrosscorr)
+
+    #method returns data sets plotting
+    def __retrieve_bad_datasets(self,ch1,ch2):
+        #intililise return data
+        idx = int(0)
+        nkdatapoints = list()
+        bgdatapoints = list()
+        #run across interval bad data bools and plot
+        for badvalbool in self.nkxc.interval_baddata:
+            if badvalbool:
+                nkdatapoints.append(self.nkxc.correlation_matrix[ch1,ch2,idx])
+            idx = idx +1
+        return nkdatapoints,bgdatapoints
+    #Generate Plots from data
+    def generate_bad_data_demonstration(self,ch1,ch2,filename=''):
+        nk,bg = self.__retrieve_bad_datasets(self,ch1,ch2)
+        plt.subplot(1,2,1)
+        plt.hist(bg, bins = np.arange(0, 1.01, 0.05), label = 'Bad Data',color = 'red')
+        plt.hist(self.nkxc.correlation_matrix[ch1,ch2], label = 'Okay Data')
+        plt.xlabel('frequency')
+        plt.ylabel('Cross Correlation value')
+        plt.subplot(1,2,2)
+        plt.hist(bg, bins = np.arange(0, 1.01, 0.05), label = 'Bad Data',color = 'red')
+        plt.hist(self.bgxc.correlation_matrix[ch1,ch2], label = 'Okay Data')
+        plt.xlabel('frequency')
+        plt.ylabel('Cross Correlation value')
+        plt.title("ch1,ch2: "+str(ch1)+","+str(ch2))
+        if filename != '':
+            plt.savefig(filename+str(ch1)+'_'+str(ch2)+'.svg')
+        else:
+            plt.show()
+
+
+
 
 #Slightly modified copy of the procedure in the notebooks to generate and save all cross correlator plots for a given interval
 def fulldataconstruction(satnum,output_data,nkoutput_data,correlation_interval):
