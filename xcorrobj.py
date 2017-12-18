@@ -148,16 +148,28 @@ class crosscorrelator():
         backgroundvals = self.correlation_matrix[ch1,ch2]
         return sum(i<x_corr_val for i in backgroundvals)/float(len(backgroundvals))
 
-    #For given pair of channels return closest val data
-    def find_closest_x_corr_index(self,x_corr_val,ch1,ch2):
-        index , truevalue = self.__find_nearest(self.correlation_matrix[ch1,ch2],x_corr_val)
-        time = self.interval_datetimes[index]
-        return index , truevalue , time
-
-    #for find x_corr_index, returns closest value
+    #for find_x_corr_index, returns closest value
     def __find_nearest(self,array,value):
         idx = (np.abs(array-value)).argmin()
         return idx , array[idx]
+
+    #For given pair of channels return closest val data
+        time = self.interval_datetimes[index]
+        return index , truevalue , time
+
+    #As above but returns dataset tuple for xcorr val plots
+    def __find_closest_x_corr_datapoints(self,x_cor_val,ch1,ch2):
+        index , truevalue , time = find_closest_x_corr_index(self,x_corr_val,ch1,ch2)
+        rawstartindex = self.interval_startingindex[index]
+        #Find data points from starting index info
+        if (len(self.interval_startingindex)>index+1):
+            rawendindex = self.interval_startingindex[index+1]
+        else:
+            rawendindex = len(self.interval_startingindex)-1
+        x1 = [datapoints[ch1] for datapoints in self.__datastore[rawstartindex:rawendindex]]
+        x2 = [datapoints[ch2] for datapoints in self.__datastore[rawstartindex:rawendindex]]        
+        times = self.__timestamps[rawstartindex:rawendindex]
+        return (x1,x2,times,truevalue)
 
     #Creates Scatters for a pair of channels of different crosscorrelation values
     def createscatters(self,min_val,max_val,ch1,ch2,shape=[3,2],filename='',colour='blue'):
@@ -177,6 +189,7 @@ class crosscorrelator():
                 rawendindex = len(self.interval_startingindex)-1
             x1 = [datapoints[ch1] for datapoints in self.__datastore[rawstartindex:rawendindex]]
             x2 = [datapoints[ch2] for datapoints in self.__datastore[rawstartindex:rawendindex]]
+            #generate plots
             ax = plt.subplot(shape[0],shape[1],plot_int_index)
             plt.scatter(x1,x2, color=colour)
             ax.set_xlabel('Signal from channel '+str(ch1))
@@ -212,44 +225,84 @@ class plotgenerator():
         if (not bgcrosscorr.interval_length == nkcrosscorr.interval_length):
             raise ValueError ("correlations not made over same time interval")
         #create copies of data in the object
-        self.nkxc = copy.deepcopy(bgcrosscorr)
-        self.bgxc = copy.deepcopy(nkcrosscorr)
+        self.nkxc = copy.deepcopy(nkcrosscorr)
+        self.bgxc = copy.deepcopy(bgcrosscorr)
 
     #method returns data sets plotting
     def __retrieve_bad_datasets(self,ch1,ch2):
         #intililise return data
-        idx = int(0)
         nkdatapoints = list()
         bgdatapoints = list()
         #run across interval bad data bools and plot
+        idx = int(0)
         for badvalbool in self.nkxc.interval_baddata:
             if badvalbool:
                 nkdatapoints.append(self.nkxc.correlation_matrix[ch1,ch2,idx])
             idx = idx +1
+        idx = int(0)
+        for badvalbool in self.bgxc.interval_baddata:
+            if badvalbool:
+                bgdatapoints.append(self.bgxc.correlation_matrix[ch1,ch2,idx])
+            idx = idx +1
         return nkdatapoints,bgdatapoints
-    #Generate Plots from data
+    #Generate cross correaltion spectra plots from data to compare the bad data labels
     def generate_bad_data_demonstration(self,ch1,ch2,filename=''):
-        nk,bg = self.__retrieve_bad_datasets(self,ch1,ch2)
+        nk,bg = self.__retrieve_bad_datasets(ch1,ch2)
+        plt.figure(figsize=(20,10))
         plt.subplot(1,2,1)
-        plt.hist(bg, bins = np.arange(0, 1.01, 0.05), label = 'Bad Data',color = 'red')
-        plt.hist(self.nkxc.correlation_matrix[ch1,ch2], label = 'Okay Data')
+        plt.hist(self.nkxc.correlation_matrix[ch1,ch2], label = 'All Data',bins = np.arange(0, 1, 0.05))
+        plt.hist(nk, bins = np.arange(0, 1, 0.05), label = 'Bad Data',color = 'red')
         plt.xlabel('frequency')
         plt.ylabel('Cross Correlation value')
+        plt.title("NK data ch1,ch2: "+str(ch1)+","+str(ch2))
+        plt.legend(fontsize = 'large')
         plt.subplot(1,2,2)
-        plt.hist(bg, bins = np.arange(0, 1.01, 0.05), label = 'Bad Data',color = 'red')
-        plt.hist(self.bgxc.correlation_matrix[ch1,ch2], label = 'Okay Data')
+        plt.hist(self.bgxc.correlation_matrix[ch1,ch2], label = 'All Data',bins = np.arange(0, 1, 0.05))
+        plt.hist(bg, bins = np.arange(0, 1, 0.05), label = 'Bad Data',color = 'red')
         plt.xlabel('frequency')
         plt.ylabel('Cross Correlation value')
-        plt.title("ch1,ch2: "+str(ch1)+","+str(ch2))
+        plt.title("BG data ch1,ch2: "+str(ch1)+","+str(ch2))
+        plt.legend(fontsize = 'large')
+        plt.tight_layout()
         if filename != '':
             plt.savefig(filename+str(ch1)+'_'+str(ch2)+'.svg')
         else:
             plt.show()
+    def show_all_bad_data_plots(self,fileprefix=''):
+        for ch1 in range(11):
+    		for ch2 in range(11):
+        	    if ch1<ch2:
+		        self.generate_bad_data_demonstration(ch1,ch2,filename=fileprefix)
+    #Creates nice display of time series with matching scatter plots for given r val
+    #This code is written suboptimally: it finds and returns datasets that are later discarded
+    #Ideally, it would grab the data only if 
+    def generate_signal_time_plots(self,ch1,ch2,nktest=False,filedir=''):
+        #intialise prev val variable to stop repeated plots
+        prevval==float(-1)
+        #Intilise list of datalists
+        full_req_data = list()
+        for xcorrval in np.linspace(1,0,30)
+            if nktest:
+                datalist = self.nkxc.__find_closest_x_corr_datapoints(xcorrval,ch1,ch2)
+            else:
+                datalist = self.bgxc.__find_closest_x_corr_datapoints(xcorrval,ch1,ch2)
+            #If find closest return same data points, ignore. Otherwise save to be plotted
+            if datalist[3]!=prevval:
+                full_req_data.append(datalist) 
+                prevval = datalist[3]
+        #Run Routine that generates plots from data
+         self.__scatter_and_time_plots(self,ch1,ch2,datalist)
+    def __scatter_and_time_plots(self,ch1,ch2,data,filename='')
+
+    #Write class to file (to be finished)            
+    def savedata()
+#Method to return previous analysis to workspace from the plot generator class
+def retrieve_plot_generator()
 
 
 
-
-#Slightly modified copy of the procedure in the notebooks to generate and save all cross correlator plots for a given interval
+#Slightly modified copy of the procedure in the early notebooks to generate and save all cross correlator plots for a given interval
+#A bit messy, will replace with good demonstrating jupyter notebook
 def fulldataconstruction(satnum,output_data,nkoutput_data,correlation_interval):
     #create instances of cross-correlator
     background = crosscorrelator()
