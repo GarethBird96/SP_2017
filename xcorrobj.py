@@ -5,6 +5,8 @@ from datetime import datetime, timedelta
 import matplotlib.pyplot as plt
 import os
 import copy
+import matplotlib.dates as mdates
+import matplotlib as mpl
 class crosscorrelator():
     #Constructor
     def __init__(self):
@@ -152,14 +154,14 @@ class crosscorrelator():
     def __find_nearest(self,array,value):
         idx = (np.abs(array-value)).argmin()
         return idx , array[idx]
-
-    #For given pair of channels return closest val data
+    def find_closest_x_corr_index(self,x_corr_val,ch1,ch2):
+        index , truevalue = self.__find_nearest(self.correlation_matrix[ch1,ch2],x_corr_val)
         time = self.interval_datetimes[index]
         return index , truevalue , time
 
     #As above but returns dataset tuple for xcorr val plots
-    def __find_closest_x_corr_datapoints(self,x_cor_val,ch1,ch2):
-        index , truevalue , time = find_closest_x_corr_index(self,x_corr_val,ch1,ch2)
+    def find_closest_x_corr_datapoints(self,x_corr_val,ch1,ch2):
+        index , truevalue , time = self.find_closest_x_corr_index(x_corr_val,ch1,ch2)
         rawstartindex = self.interval_startingindex[index]
         #Find data points from starting index info
         if (len(self.interval_startingindex)>index+1):
@@ -278,26 +280,53 @@ class plotgenerator():
     #Ideally, it would grab the data only if 
     def generate_signal_time_plots(self,ch1,ch2,nktest=False,filedir=''):
         #intialise prev val variable to stop repeated plots
-        prevval==float(-1)
+        prevval=float(-1)
         #Intilise list of datalists
         full_req_data = list()
-        for xcorrval in np.linspace(1,0,30)
+        for xcorrval in np.linspace(1,0,30):
             if nktest:
-                datalist = self.nkxc.__find_closest_x_corr_datapoints(xcorrval,ch1,ch2)
+                datalist = self.nkxc.find_closest_x_corr_datapoints(xcorrval,ch1,ch2)
             else:
-                datalist = self.bgxc.__find_closest_x_corr_datapoints(xcorrval,ch1,ch2)
+                datalist = self.bgxc.find_closest_x_corr_datapoints(xcorrval,ch1,ch2)
             #If find closest return same data points, ignore. Otherwise save to be plotted
-            if datalist[3]!=prevval:
+            if (datalist[3]!=prevval):
                 full_req_data.append(datalist) 
                 prevval = datalist[3]
         #Run Routine that generates plots from data
-         self.__scatter_and_time_plots(self,ch1,ch2,datalist)
-    def __scatter_and_time_plots(self,ch1,ch2,data,filename='')
+        self.__scatter_and_time_plots(ch1,ch2,full_req_data)
+    
+    #Private Method Generate Side By side plota
+    def __scatter_and_time_plots(self,ch1,ch2,data,filename=''):
+        plotlength = len(data)
+        print 'Number Of Plots',plotlength
+        idx= int(0)
+        plt.figure(figsize=(15,7*len(data)))
+        for dataset in data:
+            #Label Data For Readablity
+            ych1=data[idx][0]
+            ych2=data[idx][1]
+            dates=data[idx][2]
+            rval=data[idx][3]
+            #Generate Timeplot
+            ax = plt.subplot(plotlength,2,2*idx+1)
+            plt.title('XcorrVal:'+str(rval) )
+            plt.plot(dates,ych1,label=str(ch1))
+            plt.plot(dates,ych2,label=str(ch2))
+            ax.legend(loc='best')
+            #Generate Matching Scatter
+            ax = plt.subplot(plotlength,2,2*idx+2)
+            plt.scatter(ych1,ych2)
+            ax.set_xlabel('Signal from channel '+str(ch1))
+            ax.set_ylabel('Signal from channel '+str(ch2))
+            idx=idx+1
+        plt.show()
+        #Write class to file (to be finished)            
+    def savedata():
+        return 0
 
-    #Write class to file (to be finished)            
-    def savedata()
 #Method to return previous analysis to workspace from the plot generator class
-def retrieve_plot_generator()
+def retrieve_plot_generator():
+    return 0
 
 
 
@@ -336,8 +365,6 @@ def fulldataconstruction(satnum,output_data,nkoutput_data,correlation_interval):
                 min_xcorr_list.append( listtoappend )
 
 
-    import matplotlib.dates as mdates
-    import matplotlib as mpl
     min_date_vals = [items[0] for items in min_xcorr_list]
     min_xcorr_vals =  [items[0] for items in min_xcorr_list]
     #mpl_data = mdates.datetime(min_date_vals)
