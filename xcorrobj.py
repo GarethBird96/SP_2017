@@ -7,6 +7,7 @@ import os
 import copy
 import matplotlib.dates as mdates
 import matplotlib as mpl
+import pickle as pkl
 class crosscorrelator():
     #Constructor
     def __init__(self):
@@ -171,7 +172,8 @@ class crosscorrelator():
         x1 = [datapoints[ch1] for datapoints in self.__datastore[rawstartindex:rawendindex]]
         x2 = [datapoints[ch2] for datapoints in self.__datastore[rawstartindex:rawendindex]]        
         times = self.__timestamps[rawstartindex:rawendindex]
-        return (x1,x2,times,truevalue)
+        baddata = self.interval_baddata[index]
+        return (x1,x2,times,truevalue,baddata)
 
     #Creates Scatters for a pair of channels of different crosscorrelation values
     def createscatters(self,min_val,max_val,ch1,ch2,shape=[3,2],filename='',colour='blue'):
@@ -283,7 +285,7 @@ class plotgenerator():
         prevval=float(-1)
         #Intilise list of datalists
         full_req_data = list()
-        for xcorrval in np.linspace(1,0,30):
+        for xcorrval in np.linspace(1,0,15):
             if nktest:
                 datalist = self.nkxc.find_closest_x_corr_datapoints(xcorrval,ch1,ch2)
             else:
@@ -293,7 +295,7 @@ class plotgenerator():
                 full_req_data.append(datalist) 
                 prevval = datalist[3]
         #Run Routine that generates plots from data
-        self.__scatter_and_time_plots(ch1,ch2,full_req_data)
+        self.__scatter_and_time_plots(ch1,ch2,full_req_data,filename=filedir)
     
     #Private Method Generate Side By side plota
     def __scatter_and_time_plots(self,ch1,ch2,data,filename=''):
@@ -309,9 +311,13 @@ class plotgenerator():
             rval=data[idx][3]
             #Generate Timeplot
             ax = plt.subplot(plotlength,2,2*idx+1)
-            plt.title('XcorrVal:'+str(rval) )
+            plt.title('XcorrVal:'+str(rval)+'\n Bad data: '+str(data[idx][4]))
             plt.plot(dates,ych1,label=str(ch1))
             plt.plot(dates,ych2,label=str(ch2))
+            ax.set_xlabel('Time of signal')
+            xfmt = mdates.DateFormatter('%d-%m-%y %H:%M')
+            ax.xaxis.set_major_formatter(xfmt)
+            plt.xticks(rotation=45)
             ax.legend(loc='best')
             #Generate Matching Scatter
             ax = plt.subplot(plotlength,2,2*idx+2)
@@ -319,14 +325,23 @@ class plotgenerator():
             ax.set_xlabel('Signal from channel '+str(ch1))
             ax.set_ylabel('Signal from channel '+str(ch2))
             idx=idx+1
-        plt.show()
+        plt.tight_layout()
+        if filename != '':
+            plt.savefig(filename+str(ch1)+'_'+str(ch2)+'.svg')
+        else:
+            plt.show()
         #Write class to file (to be finished)            
-    def savedata():
+    def savedata(self,savepath):
+        pkl.dump(self,savepath,pkl.HIGHEST_PROTOCOL)
         return 0
 
-#Method to return previous analysis to workspace from the plot generator class
-def retrieve_plot_generator():
-    return 0
+class filetools():
+    def _init_(self,satnum):
+        return 0 
+    #Method to return previous analysis to workspace from the plot generator class
+    def retrieve_plot_generator():
+        return 0
+
 
 
 
