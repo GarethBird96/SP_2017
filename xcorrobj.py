@@ -280,7 +280,7 @@ class plotgenerator():
     #Creates nice display of time series with matching scatter plots for given r val
     #This code is written suboptimally: it finds and returns datasets that are later discarded
     #Ideally, it would grab the data only if 
-    def generate_signal_time_plots(self,ch1,ch2,nktest=False,filedir=''):
+    def generate_signal_time_plots(self,ch1,ch2,nktest=False,fft=False,filedir=''):
         #intialise prev val variable to stop repeated plots
         prevval=float(-1)
         #Intilise list of datalists
@@ -295,7 +295,10 @@ class plotgenerator():
                 full_req_data.append(datalist) 
                 prevval = datalist[3]
         #Run Routine that generates plots from data
-        self.__scatter_and_time_plots(ch1,ch2,full_req_data,filename=filedir)
+        if(fft):
+            self.__scatter_time_fft_plots(ch1,ch2,full_req_data,filename=filedir)    
+        else:
+            self.__scatter_and_time_plots(ch1,ch2,full_req_data,filename=filedir)
     
     #Private Method Generate Side By side plota
     def __scatter_and_time_plots(self,ch1,ch2,data,filename=''):
@@ -303,6 +306,7 @@ class plotgenerator():
         print 'Number Of Plots',plotlength
         idx= int(0)
         plt.figure(figsize=(15,7*len(data)))
+        #Run across generated time series
         for dataset in data:
             #Label Data For Readablity
             ych1=data[idx][0]
@@ -324,6 +328,58 @@ class plotgenerator():
             plt.scatter(ych1,ych2)
             ax.set_xlabel('Signal from channel '+str(ch1))
             ax.set_ylabel('Signal from channel '+str(ch2))
+            idx=idx+1
+        plt.tight_layout()
+        if filename != '':
+            plt.savefig(filename+str(ch1)+'_'+str(ch2)+'.svg')
+        else:
+            plt.show()
+    def __scatter_time_fft_plots(self,ch1,ch2,data,filename=''):
+        plotlength = len(data)
+        print 'Number Of Plots',plotlength
+        idx= int(0)
+        plt.figure(figsize=(44,7*len(data)))
+        #Run across generated time series
+        for dataset in data:
+            #Label Data For Readablity
+            ych1=data[idx][0]
+            ych2=data[idx][1]
+            dates=data[idx][2]
+            rval=data[idx][3]
+            #Convert dates in hours elapsed for fft    
+            startingdate=dates[0]
+            hourselapsed =[(iter_date-startingdate).total_seconds()/3600 for iter_date in dates]
+            #Convert into fft
+            #define and compute fft
+            f1 = np.fft.fft(ych1)
+            f2 = np.fft.fft(ych2)
+            #compute freq vals to plot alongside
+            freq1 = np.fft.fftfreq(len(ych1) , d= hourselapsed[1]-hourselapsed[0])
+            freq2 = np.fft.fftfreq(len(ych2) , d= hourselapsed[1]-hourselapsed[0])
+            T1 = 1/freq1
+            T2 = 1/freq2
+            #Generate Timeplot
+            ax = plt.subplot(plotlength,3,3*idx+1)
+            plt.title('XcorrVal:'+str(rval)+'\n Bad data: '+str(data[idx][4]))
+            plt.plot(dates,ych1,label=str(ch1))
+            plt.plot(dates,ych2,label=str(ch2))
+            ax.set_xlabel('Time of signal')
+            xfmt = mdates.DateFormatter('%d-%m-%y %H:%M')
+            ax.xaxis.set_major_formatter(xfmt)
+            plt.xticks(rotation=45)
+            ax.legend(loc='best')
+            #Generate Matching Scatter
+            ax = plt.subplot(plotlength,3,3*idx+2)
+            plt.scatter(ych1,ych2)
+            ax.set_xlabel('Signal from channel '+str(ch1))
+            ax.set_ylabel('Signal from channel '+str(ch2))
+            #Generate FFT Plot
+            ax = plt.subplot(plotlength,3,3*idx+3)
+            plt.plot(freq1,abs(f1),label=str(ch1))
+            plt.plot(freq2,abs(f2),label=str(ch2))
+            plt.xlim(-0.5,2)
+            ax.legend(loc='best')
+            #Increase Plot index
             idx=idx+1
         plt.tight_layout()
         if filename != '':
