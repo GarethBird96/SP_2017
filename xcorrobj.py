@@ -237,7 +237,7 @@ class plotgenerator():
         #intililise return data
         nkdatapoints = list()
         bgdatapoints = list()
-        #run across interval bad data bools and plot
+        #run across interval bad data bools and append and return relevant data points
         idx = int(0)
         for badvalbool in self.nkxc.interval_baddata:
             if badvalbool:
@@ -353,11 +353,11 @@ def fulldataconstruction(satnum,output_data,nkoutput_data,correlation_interval):
     nkevent = crosscorrelator()
     signal = 'rate_electron_measured'
     #Create Directory if it doesn't exsist
-    dirpath='gareth/figures/ns'+str(satnum)+'_'+str(int((correlation_interval.total_seconds())/3600))+'hours'
+    dirpath='ns'+str(satnum)+'/figures/'+str(int((correlation_interval.total_seconds())/3600))+'hours'
     print dirpath
     if not os.path.exists(dirpath):
         os.makedirs(dirpath)
-    #Add data to clasa
+    #Add data to class
     background.add_all_signals(output_data,satnum,signal)
     background.add_time_data(output_data[satnum]['datetime'][:])
     nkevent.add_all_signals(nkoutput_data,satnum,signal)
