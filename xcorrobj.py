@@ -4,6 +4,10 @@ import math
 from datetime import datetime, timedelta
 import matplotlib.pyplot as plt
 import os
+import copy
+import matplotlib.dates as mdates
+import matplotlib as mpl
+import pickle as pkl
 class crosscorrelator():
     #Constructor
     def __init__(self):
@@ -41,7 +45,7 @@ class crosscorrelator():
             raise ValueError ("Mismatched Data Sizes")
         if type(corrinterval) != type(timedelta()):
             raise ValueError ("Not of timedelta format ")
-        #intialise data and booleans
+        #intialise data and booleans and save to object when neccessary
         new_correlation= True;
         time_index = int(0)
         starting_index = int(0)
@@ -49,6 +53,7 @@ class crosscorrelator():
         self.interval_datetimes = list()
         self.interval_baddata = list()
         self.interval_startingindex = list()
+        self.interval_length = corrinterval
         #Run across datetimes
         for datetime in self.__timestamps:
             #reset vals if new time interval
@@ -146,16 +151,29 @@ class crosscorrelator():
         backgroundvals = self.correlation_matrix[ch1,ch2]
         return sum(i<x_corr_val for i in backgroundvals)/float(len(backgroundvals))
 
-    #For given pair of channels return closest val data
+    #for find_x_corr_index, returns closest value
+    def __find_nearest(self,array,value):
+        idx = (np.abs(array-value)).argmin()
+        return idx , array[idx]
     def find_closest_x_corr_index(self,x_corr_val,ch1,ch2):
         index , truevalue = self.__find_nearest(self.correlation_matrix[ch1,ch2],x_corr_val)
         time = self.interval_datetimes[index]
         return index , truevalue , time
 
-    #for find x_corr_index, returns closest value
-    def __find_nearest(self,array,value):
-        idx = (np.abs(array-value)).argmin()
-        return idx , array[idx]
+    #As above but returns dataset tuple for xcorr val plots
+    def find_closest_x_corr_datapoints(self,x_corr_val,ch1,ch2):
+        index , truevalue , time = self.find_closest_x_corr_index(x_corr_val,ch1,ch2)
+        rawstartindex = self.interval_startingindex[index]
+        #Find data points from starting index info
+        if (len(self.interval_startingindex)>index+1):
+            rawendindex = self.interval_startingindex[index+1]
+        else:
+            rawendindex = len(self.interval_startingindex)-1
+        x1 = [datapoints[ch1] for datapoints in self.__datastore[rawstartindex:rawendindex]]
+        x2 = [datapoints[ch2] for datapoints in self.__datastore[rawstartindex:rawendindex]]        
+        times = self.__timestamps[rawstartindex:rawendindex]
+        baddata = self.interval_baddata[index]
+        return (x1,x2,times,truevalue,baddata)
 
     #Creates Scatters for a pair of channels of different crosscorrelation values
     def createscatters(self,min_val,max_val,ch1,ch2,shape=[3,2],filename='',colour='blue'):
@@ -175,6 +193,7 @@ class crosscorrelator():
                 rawendindex = len(self.interval_startingindex)-1
             x1 = [datapoints[ch1] for datapoints in self.__datastore[rawstartindex:rawendindex]]
             x2 = [datapoints[ch2] for datapoints in self.__datastore[rawstartindex:rawendindex]]
+            #generate plots
             ax = plt.subplot(shape[0],shape[1],plot_int_index)
             plt.scatter(x1,x2, color=colour)
             ax.set_xlabel('Signal from channel '+str(ch1))
@@ -201,18 +220,200 @@ class crosscorrelator():
         print 'number of intervals removed ',len(badindices)
         return reduced_array
 
-#Slightly modified copy of the procedure in the notebooks to generate and save all cross correlator plots for a given interval
+
+
+#New Plot utility with the objective of saving the cross correlator instances for retrievable plotdata for each interval
+class plotgenerator():
+    def __init__(self,satnum,bgcrosscorr,nkcrosscorr):
+        #check basic compatibilty
+        if (not bgcrosscorr.interval_length == nkcrosscorr.interval_length):
+            raise ValueError ("correlations not made over same time interval")
+        #create copies of data in the object
+        self.nkxc = copy.deepcopy(nkcrosscorr)
+        self.bgxc = copy.deepcopy(bgcrosscorr)
+
+    #method returns data sets plotting
+    def __retrieve_bad_datasets(self,ch1,ch2):
+        #intililise return data
+        nkdatapoints = list()
+        bgdatapoints = list()
+        #run across interval bad data bools and append and return relevant data points
+        idx = int(0)
+        for badvalbool in self.nkxc.interval_baddata:
+            if badvalbool:
+                nkdatapoints.append(self.nkxc.correlation_matrix[ch1,ch2,idx])
+            idx = idx +1
+        idx = int(0)
+        for badvalbool in self.bgxc.interval_baddata:
+            if badvalbool:
+                bgdatapoints.append(self.bgxc.correlation_matrix[ch1,ch2,idx])
+            idx = idx +1
+        return nkdatapoints,bgdatapoints
+    #Generate cross correaltion spectra plots from data to compare the bad data labels
+    def generate_bad_data_demonstration(self,ch1,ch2,filename=''):
+        nk,bg = self.__retrieve_bad_datasets(ch1,ch2)
+        plt.figure(figsize=(20,10))
+        plt.subplot(1,2,1)
+        plt.hist(self.nkxc.correlation_matrix[ch1,ch2], label = 'All Data',bins = np.arange(0, 1, 0.05))
+        plt.hist(nk, bins = np.arange(0, 1, 0.05), label = 'Bad Data',color = 'red')
+        plt.xlabel('frequency')
+        plt.ylabel('Cross Correlation value')
+        plt.title("NK data ch1,ch2: "+str(ch1)+","+str(ch2))
+        plt.legend(fontsize = 'large')
+        plt.subplot(1,2,2)
+        plt.hist(self.bgxc.correlation_matrix[ch1,ch2], label = 'All Data',bins = np.arange(0, 1, 0.05))
+        plt.hist(bg, bins = np.arange(0, 1, 0.05), label = 'Bad Data',color = 'red')
+        plt.xlabel('frequency')
+        plt.ylabel('Cross Correlation value')
+        plt.title("BG data ch1,ch2: "+str(ch1)+","+str(ch2))
+        plt.legend(fontsize = 'large')
+        plt.tight_layout()
+        if filename != '':
+            plt.savefig(filename+str(ch1)+'_'+str(ch2)+'.svg')
+        else:
+            plt.show()
+    def show_all_bad_data_plots(self,fileprefix=''):
+        for ch1 in range(11):
+    		for ch2 in range(11):
+        	    if ch1<ch2:
+		        self.generate_bad_data_demonstration(ch1,ch2,filename=fileprefix)
+    #Creates nice display of time series with matching scatter plots for given r val
+    #This code is written suboptimally: it finds and returns datasets that are later discarded
+    #Ideally, it would grab the data only if 
+    def generate_signal_time_plots(self,ch1,ch2,nktest=False,fft=False,filedir=''):
+        #intialise prev val variable to stop repeated plots
+        prevval=float(-1)
+        #Intilise list of datalists
+        full_req_data = list()
+        for xcorrval in np.linspace(1,0,15):
+            if nktest:
+                datalist = self.nkxc.find_closest_x_corr_datapoints(xcorrval,ch1,ch2)
+            else:
+                datalist = self.bgxc.find_closest_x_corr_datapoints(xcorrval,ch1,ch2)
+            #If find closest return same data points, ignore. Otherwise save to be plotted
+            if (datalist[3]!=prevval):
+                full_req_data.append(datalist) 
+                prevval = datalist[3]
+        #Run Routine that generates plots from data
+        if(fft):
+            self.__scatter_time_fft_plots(ch1,ch2,full_req_data,filename=filedir)    
+        else:
+            self.__scatter_and_time_plots(ch1,ch2,full_req_data,filename=filedir)
+    
+    #Private Method Generate Side By side plota
+    def __scatter_and_time_plots(self,ch1,ch2,data,filename=''):
+        plotlength = len(data)
+        print 'Number Of Plots',plotlength
+        idx= int(0)
+        plt.figure(figsize=(15,7*len(data)))
+        #Run across generated time series
+        for dataset in data:
+            #Label Data For Readablity
+            ych1=data[idx][0]
+            ych2=data[idx][1]
+            dates=data[idx][2]
+            rval=data[idx][3]
+            #Generate Timeplot
+            ax = plt.subplot(plotlength,2,2*idx+1)
+            plt.title('XcorrVal:'+str(rval)+'\n Bad data: '+str(data[idx][4]))
+            plt.plot(dates,ych1,label=str(ch1))
+            plt.plot(dates,ych2,label=str(ch2))
+            ax.set_xlabel('Time of signal')
+            xfmt = mdates.DateFormatter('%d-%m-%y %H:%M')
+            ax.xaxis.set_major_formatter(xfmt)
+            plt.xticks(rotation=45)
+            ax.legend(loc='best')
+            #Generate Matching Scatter
+            ax = plt.subplot(plotlength,2,2*idx+2)
+            plt.scatter(ych1,ych2)
+            ax.set_xlabel('Signal from channel '+str(ch1))
+            ax.set_ylabel('Signal from channel '+str(ch2))
+            idx=idx+1
+        plt.tight_layout()
+        if filename != '':
+            plt.savefig(filename+str(ch1)+'_'+str(ch2)+'.svg')
+        else:
+            plt.show()
+    def __scatter_time_fft_plots(self,ch1,ch2,data,filename=''):
+        plotlength = len(data)
+        print 'Number Of Plots',plotlength
+        idx= int(0)
+        plt.figure(figsize=(44,7*len(data)))
+        #Run across generated time series
+        for dataset in data:
+            #Label Data For Readablity
+            ych1=data[idx][0]
+            ych2=data[idx][1]
+            dates=data[idx][2]
+            rval=data[idx][3]
+            #Convert dates in hours elapsed for fft    
+            startingdate=dates[0]
+            hourselapsed =[(iter_date-startingdate).total_seconds()/3600 for iter_date in dates]
+            #Convert into fft
+            #define and compute fft
+            f1 = np.fft.fft(ych1)
+            f2 = np.fft.fft(ych2)
+            #compute freq vals to plot alongside
+            freq1 = np.fft.fftfreq(len(ych1) , d= hourselapsed[1]-hourselapsed[0])
+            freq2 = np.fft.fftfreq(len(ych2) , d= hourselapsed[1]-hourselapsed[0])
+            T1 = 1/freq1
+            T2 = 1/freq2
+            #Generate Timeplot
+            ax = plt.subplot(plotlength,3,3*idx+1)
+            plt.title('XcorrVal:'+str(rval)+'\n Bad data: '+str(data[idx][4]))
+            plt.plot(dates,ych1,label=str(ch1))
+            plt.plot(dates,ych2,label=str(ch2))
+            ax.set_xlabel('Time of signal')
+            xfmt = mdates.DateFormatter('%d-%m-%y %H:%M')
+            ax.xaxis.set_major_formatter(xfmt)
+            plt.xticks(rotation=45)
+            ax.legend(loc='best')
+            #Generate Matching Scatter
+            ax = plt.subplot(plotlength,3,3*idx+2)
+            plt.scatter(ych1,ych2)
+            ax.set_xlabel('Signal from channel '+str(ch1))
+            ax.set_ylabel('Signal from channel '+str(ch2))
+            #Generate FFT Plot
+            ax = plt.subplot(plotlength,3,3*idx+3)
+            plt.plot(freq1,abs(f1),label=str(ch1))
+            plt.plot(freq2,abs(f2),label=str(ch2))
+            plt.xlim(-0.5,2)
+            ax.legend(loc='best')
+            #Increase Plot index
+            idx=idx+1
+        plt.tight_layout()
+        if filename != '':
+            plt.savefig(filename+str(ch1)+'_'+str(ch2)+'.svg')
+        else:
+            plt.show()
+        #Write class to file (to be finished)            
+    def savedata(self,savepath):
+        pkl.dump(self,savepath,pkl.HIGHEST_PROTOCOL)
+        return 0
+
+class filetools():
+    def _init_(self,satnum):
+        return 0 
+    #Method to return previous analysis to workspace from the plot generator class
+    def retrieve_plot_generator():
+        return 0
+
+
+
+
+#Slightly modified copy of the procedure in the early notebooks to generate and save all cross correlator plots for a given interval
+#A bit messy, will replace with good demonstrating jupyter notebook
 def fulldataconstruction(satnum,output_data,nkoutput_data,correlation_interval):
     #create instances of cross-correlator
     background = crosscorrelator()
     nkevent = crosscorrelator()
     signal = 'rate_electron_measured'
     #Create Directory if it doesn't exsist
-    dirpath='gareth/figures/ns'+str(satnum)+'_'+str(int((correlation_interval.total_seconds())/3600))+'hours'
+    dirpath='ns'+str(satnum)+'/figures/'+str(int((correlation_interval.total_seconds())/3600))+'hours'
     print dirpath
     if not os.path.exists(dirpath):
         os.makedirs(dirpath)
-    #Add data to clasa
+    #Add data to class
     background.add_all_signals(output_data,satnum,signal)
     background.add_time_data(output_data[satnum]['datetime'][:])
     nkevent.add_all_signals(nkoutput_data,satnum,signal)
@@ -235,8 +436,6 @@ def fulldataconstruction(satnum,output_data,nkoutput_data,correlation_interval):
                 min_xcorr_list.append( listtoappend )
 
 
-    import matplotlib.dates as mdates
-    import matplotlib as mpl
     min_date_vals = [items[0] for items in min_xcorr_list]
     min_xcorr_vals =  [items[0] for items in min_xcorr_list]
     #mpl_data = mdates.datetime(min_date_vals)
