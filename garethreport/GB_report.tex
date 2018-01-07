@@ -1,0 +1,77 @@
+\documentclass[12pt,a4paper]{article}
+
+%  PACKAGES
+%Basic Text
+\usepackage[latin1]{inputenc}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+
+
+%Figures
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{epstopdf}
+\usepackage{caption}
+\usepackage{subcaption}
+%\usepackage{subfigure}
+
+%Hyperlinks For References + Links
+\usepackage{hyperref}
+
+%Nice Code Layout 
+\usepackage{listings}
+
+%Useful  
+\usepackage{hepnames}
+\usepackage{siunitx}
+
+%Test If Floats Will Fit Preemtively
+\usepackage{lipsum}
+
+%  TITLE + PAGE INFO
+
+\usepackage[affil-it]{authblk}
+%\usepackage[superscript,biblabel]{cite}
+\usepackage[width=18.0cm, height=26.00cm]{geometry}
+\title{Further analysis of the cross correlation method for the detection of North Korea tests}
+\author{Gareth Bird \\ \href{mailto:gareth.bird@sjc.ox.ac.uk}{gareth.bird@sjc.ox.ac.uk}}
+\affil{University of Oxford}
+
+%  COMMANDS
+
+%  DOCUMENT
+\begin{document}
+\maketitle
+\begin{abstract}
+	
+\end{abstract}
+\section{Introduction}
+	With data from lower altitude satellites, seismic activity has been linked to particle bursts in similar L shells. \cite{aleksandrin2003high}. In currently unpublished work, the methods for matching particle bursts has been modified to be used on public access gps electron count data with reasonable success. Further to this, Filip Wach observed that by taking cross correlation data for the raw signal between energy channels of the satellites results in anamolous values compared to background data but there was not any discussions as to why.\cite{filipwach2017}
+	
+	This work was undertaken as a continuation of Filip Wach's work with main objective of taking and testing these analysis methods further.
+	
+	All code for the project insofar has been created using Python 2.7 with Jupyter notebooks with simple wget commands in ubuntu. There also exists a parallelised version of this method but they are currently not compatible with one another. All branches of the code can be found \href{https://github.com/fw14863/SP_2017/network}{here}.
+	% Consider Relocating section
+	\subsection{Previous methodology}
+	After tracing through the code from the previous project and discussing with group, a couple of issues arose.
+	\begin{itemize}
+		\item
+		When downloading data using the meta-search class, the data returned retrieved all file names between the given time interval, but did not then cut according to the dates provided. This seemed problematic as the background data did impose an exact time interval. As discussed later, this does have a effect on the cross correlation spectra (See Section \ref{ssec:Trends}) but does not invalidate the method.
+		\item
+		To modify the satellite used for downloading, the source code needed to modified and was not clearly been labelled. This has been fixed in both branches of the new downloader.
+	\end{itemize}
+	
+\section{New Cross Correlation Objects and Plot Methods}
+
+\section{Results}
+\subsection{Plots}
+\subsection{Trends}\label{ssec:Trends}
+\subsection{Suggestions For Continuation}
+\bibliographystyle{IEEEtran}
+\bibliography{GB_report}
+\newpage
+\appendix
+\section{}
+
+\end{document}
