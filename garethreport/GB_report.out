@@ -1,8 +1,12 @@
 \BOOKMARK [1][-]{section.1}{Introduction}{}% 1
-\BOOKMARK [2][-]{subsection.1.1}{Previous methodology}{section.1}% 2
-\BOOKMARK [1][-]{section.2}{New Cross Correlation Objects and Plot Methods}{}% 3
-\BOOKMARK [1][-]{section.3}{Results}{}% 4
-\BOOKMARK [2][-]{subsection.3.1}{Plots}{section.3}% 5
-\BOOKMARK [2][-]{subsection.3.2}{Trends}{section.3}% 6
-\BOOKMARK [2][-]{subsection.3.3}{Suggestions For Continuation}{section.3}% 7
-\BOOKMARK [1][-]{appendix.A}{}{}% 8
+\BOOKMARK [1][-]{section.2}{Methods}{}% 2
+\BOOKMARK [2][-]{subsection.2.1}{Previous methodology modifications}{section.2}% 3
+\BOOKMARK [2][-]{subsection.2.2}{General Procedure}{section.2}% 4
+\BOOKMARK [2][-]{subsection.2.3}{General Object Structure}{section.2}% 5
+\BOOKMARK [2][-]{subsection.2.4}{Plot procedures}{section.2}% 6
+\BOOKMARK [1][-]{section.3}{Results}{}% 7
+\BOOKMARK [2][-]{subsection.3.1}{Plots and Trends}{section.3}% 8
+\BOOKMARK [3][-]{subsubsection.3.1.1}{Further Cross Correlation Spectra Plots with timestamps \(eventfinding\)}{subsection.3.1}% 9
+\BOOKMARK [3][-]{subsubsection.3.1.2}{Scatter, Time Series and Fourier transform plots}{subsection.3.1}% 10
+\BOOKMARK [3][-]{subsubsection.3.1.3}{Bad Data Spectra}{subsection.3.1}% 11
+\BOOKMARK [1][-]{section.4}{Suggestions For Continuation}{}% 12
