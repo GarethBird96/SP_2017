@@ -34,4 +34,8 @@ F.~Wach, ``A study of van allen belt signatures of nuclear weapon tests for
   \url{https://github.com/fw14863/SP_2017/blob/master/FW_report.pdf}
 \BIBentrySTDinterwordspacing
 
+\bibitem{li1983analysis}
+T.-P. Li and Y.-Q. Ma, ``Analysis methods for results in gamma-ray astronomy,''
+  \emph{The Astrophysical Journal}, vol. 272, pp. 317--324, 1983.
+
 \end{thebibliography}

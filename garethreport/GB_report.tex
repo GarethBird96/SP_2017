@@ -1,4 +1,4 @@
-\documentclass[12pt,a4paper]{article}
+\documentclass[10pt,a4paper]{article}
 
 %  PACKAGES
 %Basic Text
@@ -43,17 +43,17 @@
 \newcommand{\figref}[1]{Figure \ref{#1} }
 \newcommand{\tabref}[1]{Table \ref{#1} }
 \newcommand{\xco}{\textit{xcorrobj.py}}
-
+%fix broken footnote
+\interfootnotelinepenalty=10000
 %  DOCUMENT
 \begin{document}
+
 \maketitle
-\begin{abstract}
-	
-\end{abstract}
+\textit{This is not as complete as I would hope as I was planning on discussing this draft before finishing.}
 \section{Introduction}
-	With data from lower altitude satellites, seismic activity has been linked to particle bursts in similar L shells. \cite{aleksandrin2003high}. In currently unpublished work, the methods for matching particle bursts has been modified to be used on public access gps electron count data with reasonable success. Further to this, Filip Wach observed that by taking cross correlation data for the raw signal between energy channels of the satellites results in anomalous values compared to background data (see \figref{fig:filipex}) but there was not any discussions as to why.\cite{filipwach2017}
+	With data from lower altitude satellites, seismic activity has been linked to particle bursts in similar L shells. \cite{aleksandrin2003high}. In currently unpublished work, the methods for matching particle bursts has been modified to be used on public access gps electron count data with reasonable success. Further to this, Wach observed that by taking cross correlation data for the raw signal between energy channels of the satellites results in anomalous values compared to background data (see \figref{fig:filipex}) but there was not any discussions as to why.\cite{filipwach2017}
 	
-	This work was undertaken as a continuation of Filip Wach's work with main objective of taking and testing these analysis methods further. The project also aimed to detect the events not previously detected if the method could be replicated.
+	This work was undertaken as a continuation of Wach's work with main objective of taking and testing these analysis methods further. The project also aimed to detect the events not previously detected if the method could be replicated.
 	
 	All code for the project insofar has been created using Python 2.7 with Jupyter notebooks with simple wget commands in ubuntu. There also exists a parallelised version of this method but they are currently not compatible with one another. All branches of the code can be found \href{https://github.com/fw14863/SP_2017/network}{here}.
 	\begin{figure}
@@ -81,7 +81,7 @@
 	As a result the first job was to make the previous code replicable and clarifying the method further.
 	  
 	\subsection{General Procedure}
-	All of my code involves analysing the data from the returned python dictionaries when calling the meta-search class method. This involves Further, the majority fo the code is finding and manipulating cross correlation values. This was done by splitting the data into equal time periods, calculating the cross correlation values and storing the information about the given time intervals alongside it. This allows me to generate the plots outlined in \secref{ssec:plotproc}.
+	All of my code involves analysing the data from the returned python dictionaries when calling the meta-search class method. Further, the majority fo the code is finding and manipulating cross correlation values. This was done by splitting the data into equal time periods, calculating the cross correlation values and storing the information about the given time intervals alongside it. This allows me to generate the plots outlined in \secref{ssec:plotproc}.
 	
 	\subsection{General Object Structure}
 	In an attempt to make my work easier to merge with other people's efforts, all my work is split into classes and methods within \textit{xcorrobj.py}.
@@ -91,7 +91,7 @@
 		\textbf{crosscorrelator}: Its main function is to calculate cross correlations of raw electron count signals over given time intervals. Stores data and dates for a given interval.
 		
 		\item
-		\textbf{plotgenerator}: Takes the satellite number and two instances of the correlator. Built to compare North Korea to Background data and save and repeat drawing instances of the data used in the plots.\footnote{A caveat is that not all the plot procedures are currently within plot generator although the code could easily be modified so that is the case.}
+		\textbf{plotgenerator}: Takes the satellite number and two instances of the correlator. Built to compare North Korea to Background data and save and repeat drawing instances of the data used in the plots. \footnote{A caveat is that not all the plot procedures are currently within plot generator although the code could easily be modified so that is the case.}
 	\end{enumerate}
 	\subsection{Plot procedures} \label{ssec:plotproc}
 	The most instructive way to see all the plots generated  and to get an idea of structure is to look at the \textit{routine demonstrations} python notebooks for given satellites. The intended output of the plots methods are described in \tabref{tab:plotdesc}. For specific implementation information/ input arguments, please refer to the commented code within \xco. To save any particular plots to file instead of displaying, change the filename from an empty string.
@@ -111,7 +111,7 @@
 		\centering
 	\end{table}
 \section{Results}
-This section is far from a complete set plots/deductions that can be found within the data files. Most of what is discussed in Sections \ref{ssec:Trends} and \ref{ssec:suggestions} arose from Skype discussion of the presentations. If you are continuing investigating these phenomena I'd recommend scanning through the extent of these plots yourself   \href{https://github.com/GarethBird96/SP_2017/tree/master/Presentations}{here}.
+This section is far from a complete set plots/deductions that can be found within the data files. Most of what is discussed in Sections \ref{ssec:Trends} and \ref{ssec:suggestions} arose from Skype discussion of the presentations. If you are continuing investigating these phenomena I'd recommend scanning through the extent of these plots yourself   \href{https://github.com/GarethBird96/SP_2017/tree/master/Presentations}{here} alongside generating your own.
 	\subsection{Plots and Trends}\label{ssec:Trends}
 		\subsubsection{Further Cross Correlation Spectra Plots with timestamps (\textit{eventfinding})}
 		\begin{figure}[h]
@@ -134,7 +134,7 @@ This section is far from a complete set plots/deductions that can be found withi
 			\caption{North Korea Cross correlation spectra for satellite ns\_56 with different}
 			\label{fig:tempspecvariation}
 		\end{figure}
-		Once the adjustments in \secref{ssec:methmod} had been made, we replicate Filip's results by working over a month time period around the North Korea test date to see if the anomalous value intervals clustered around the test date. To observe this specifically, we find the date interval which corresponds to smallest cross correlation in the.
+		Once the adjustments in \secref{ssec:methmod} had been made, we replicate Wach's results by working over a month time period around the North Korea test date to see if the anomalous value intervals clustered around the test date. To observe this specifically, we find the date interval which corresponds to smallest cross correlation in the.
 		
 		From this you can observe the following:
 		\begin{itemize}
@@ -149,32 +149,40 @@ This section is far from a complete set plots/deductions that can be found withi
 			For two high energy channels, the cross correlation coefficients tended to be more likely to be close to 1 than the background data.
 		\end{itemize}
 		\newpage
-		\begin{wrapfigure}{R}{0.4\textwidth}
+		\begin{wrapfigure}{R}{0.35\textwidth}
 			\caption{Sample 48 hour correlation intervals between channels 2 and 3, two low energy channels on satellite ns\_56}
 			\includegraphics[width=\linewidth]{Figures/2_3}
 			\label{fig:2_3}
 		\end{wrapfigure}
 		\subsubsection{Scatter, Time Series and Fourier transform plots}
-		Even though there is no obvious temporal link between the tests and the correlation anomalies, the next logical step was to check the nature of data for the intervals with different correlation coefficients. This allows us to see if smaller/larger cross correlation coefficient values are caused by less correlated data, outliers or non-linear relations between the signals.
+		Even though there is no obvious temporal link between the tests and the correlation anomalies (other than reduced values around the month of test), the next logical step was to check the nature of data for the intervals with different correlation coefficients. This allows us to see if smaller/larger cross correlation coefficient values are caused by less correlated data, outliers or non-linear relations between the signals.
 		
 		Additionally, by creating signal time plots alongside these we can see how structured scatter plots form over time. An example of this is shown in \figref{fig:2_3}
 		
 		This revealed a large variety of exotic structures which has not been fully analysed but a few things are of note:
 		\begin{itemize}
 			\item
-			Practically all of our plots have a periodic nature and some even seem to have a second periodicity convolved with it. This period seems to be roughly 6 hours but a quick FFT did not produce as clean a signal as one would hope. \footnote{This would be a good way to learn the code}
+			Practically all of our plots have a periodic nature and some even seem to have a second periodicity convolved with it. This period seems to be roughly 6 hours but a FFT did not produce as clean a signal as one would hope. \footnote{Checking this would be a good way to learn the code}
 			\item
 			There often seems to be `gaps' in the scatter plot where there is no combination of signals and sometimes form ring-like attractor shapes
 			\item
-			There are `bursts' of very large signals that can last an hour or so which are not labelled as bad data.
+			There are `bursts' of very large signals that can last an hour or so which are not always labelled as bad data.
 			\item
 			Bad data labels often do not break the data as much you'd expect because often bad data just seems to mean that there is no signal (i.e set to 0) for a short period of time
 		\end{itemize}
 		Furthermore, there is clearly quite a lot still to be analysed in the raw signal alone. However, it seems reasonably clear that just using a cross correlation coefficient to try and classify nuclear test behaviour from background seems unlikely without further metrics and a better understanding of the data.
 		\subsubsection{Bad Data Spectra}
-		An additional set of plots were created to see if using bad data changed the cross correlation spectra. It seemed that
+		An additional set of plots were created to see if using bad data changed the cross correlation spectra. It seemed that that this didn't have a drastic effect on the overall set of cross correlation values.
 		%Attach A plot here
 \section{Suggestions For Continuation}\label{ssec:suggestions}
+\begin{itemize}
+	\item
+	Analyse data points with respect to position of satellites especially whether the satellite is within the van allen belt with the aim the to ascertain the signal periodicities.
+	\item
+	Consider completely classifying outlying data with more detailed analysis outlined T.-P. Li and Y.-Q. Ma which is already implemented within \textit{gps\_particle\_data.py}. \cite{li1983analysis}
+	\item
+	Merge the methods described here with the method's used by Jack so that his methods can be used to further analyse any potential anomalies with the North Korea test data
+\end{itemize}
 \newpage
 \bibliographystyle{IEEEtran}
 \bibliography{GB_report}
